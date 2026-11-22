@@ -28,6 +28,12 @@
       </span>
     </p>
 
+    <ManifestPreview
+      v-if="meta.key === 'collection_manifest'"
+      ref="previewRef"
+      @created="reload"
+    />
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -75,7 +81,12 @@
         <h3>登记{{ meta.entity }}</h3>
         <label v-for="field in meta.fields" :key="field" class="create-field">
           <span>{{ field }}</span>
-          <input v-model="createValues[field]" :data-testid="`create-${field}`" required />
+          <input
+            v-model="createValues[field]"
+            :data-testid="`create-${field}`"
+            :required="isRequired(field)"
+            :placeholder="isRequired(field) ? '' : field === '种子页范围' ? '如：甲,乙,丙' : '可留空'"
+          />
         </label>
         <div class="page-actions">
           <button class="btn" type="button" @click="showCreate = false">取消</button>
@@ -104,12 +115,14 @@ import {
   runAction as applyAction,
 } from '@/api/backend-service'
 import type { EntryRow } from '@/data/types'
+import ManifestPreview from '@/views/ManifestPreview.vue'
 
 const props = defineProps<{ moduleKey: string }>()
 const meta = moduleMeta(props.moduleKey)
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
+const previewRef = ref<InstanceType<typeof ManifestPreview> | null>(null)
 const filters = ref<Record<string, string>>({})
 const filterFields = meta.fields.slice(0, 3)
 const showCreate = ref(false)
@@ -150,6 +163,10 @@ function openCreate() {
   showCreate.value = true
 }
 
+function isRequired(field: string): boolean {
+  return (meta.requiredFields ?? meta.fields).includes(field)
+}
+
 async function submitCreate() {
   creating.value = true
   errorMessage.value = ''
@@ -158,6 +175,7 @@ async function submitCreate() {
     if (!result.ok) throw new Error(result.message)
     showCreate.value = false
     await reload()
+    if (meta.key === 'collection_manifest') await previewRef.value?.reload()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '登记失败'
   } finally {
@@ -171,6 +189,7 @@ async function runAction(action: string, row: EntryRow) {
     const result = await applyAction(meta.key, Number(row.id), action)
     if (!result.ok) throw new Error(result.message)
     await reload()
+    if (meta.key === 'collection_manifest') await previewRef.value?.reload()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '操作失败'
   }

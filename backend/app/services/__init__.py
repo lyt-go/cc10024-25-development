@@ -20,6 +20,7 @@ from app.services.export_channel import ExportChannelService
 from app.services.run_history import RunHistoryService
 from app.services.schema_check import SchemaCheckService
 from app.services.content_cache import ContentCacheService
+from app.services.collection_manifest import CollectionManifestService
 
 SERVICES: dict[str, BaseModuleService] = {
     "behavior_script": BehaviorScriptService(),
@@ -40,6 +41,7 @@ SERVICES: dict[str, BaseModuleService] = {
     "run_history": RunHistoryService(),
     "schema_check": SchemaCheckService(),
     "content_cache": ContentCacheService(),
+    "collection_manifest": CollectionManifestService(),
 }
 
 
